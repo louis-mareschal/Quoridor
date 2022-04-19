@@ -75,16 +75,16 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	/////// YOU CAN CHANGE THE PARAMETERS HERE ///////
 
-	bool playervsplayer = false; // IA or not 
-	bool player = 1; // Who starts (1 for the player and 0 for the IA)
-	int depth = 1; // Difficulty of the AI (1 to 4). But maximum 3 is advised otherwise it's too long.
+	int number_of_AI = 2; // between 0 and 2 
+	bool player = 0; // Who starts (1 for the player and 0 for the IA)
+	int depth = 3; // Difficulty of the AI (1 to 4). But maximum 3 is advised otherwise it's too long.
 
 	/////////////////////////////////////////////////
 
 	while (running && !gameover) {
 		invalid_play = true;
 		if (player == 0) {
-			if (playervsplayer) { // Player 1
+			if (number_of_AI==0) { // Player 1
 				while (running && invalid_play) {
 					updtate_input(window, &input);
 					tie(action, state) = get_player_action(window, pci, board.grid);
@@ -94,15 +94,15 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 						if (action != 'n') {
 							if (action == 'p') {
 								if (board.player1.is_possible(state)) {
-									board.moove_player(0, state);
+									board.moove_player(player, state);
 									invalid_play = false;
 								}
 							}
 							else { // action == 'w'
 								if (board.player1.get_number_walls() > 0 && board.is_possible_wall(state, &dist1, &dist2)) {
-									board.grid.add_wall(state, 0);
-									board.update_valid_next_pos(0);
-									board.update_valid_next_pos(1);
+									board.grid.add_wall(state, player);
+									board.update_valid_next_pos(player);
+									board.update_valid_next_pos(!player);
 									board.player1.dec_wall();
 									invalid_play = false;
 								}
@@ -110,37 +110,37 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 						}
 					}
 					board.grid.update_pos();
-					display_game(board, 0, action_wall);
+					display_game(board, player, action_wall);
 					StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmap_info, DIB_RGB_COLORS, SRCCOPY);
 				}
 				player = !player;
 			}
-			else { // IA minmax
+			else { // IA 1 minmax
 				display_game(board, -1, -1);
 				StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmap_info, DIB_RGB_COLORS, SRCCOPY);
-				Node node(depth, 0, board, -1);
+				Node node(depth, player, board, -1);
 				int bestChoice = -1;
 				int bestValue = -MAX - 1;
 				node.create_children();
 				int val;
 				for (Node child : node.children) {
-					val = minmax(child, 1, -MAX, MAX);
+					val = minmax(child, !player, -MAX, MAX);
 					if (val > bestValue) {
 						bestValue = val;
 						bestChoice = child.state;
 					}
 				}
 				if (bestChoice < numberGridSquares)
-					board.moove_player(0, bestChoice);
+					board.moove_player(player, bestChoice);
 				else {
-					board.grid.add_wall(bestChoice - numberGridSquares + 1, 0);
-					board.update_valid_next_pos(0);
-					board.update_valid_next_pos(1);
+					board.grid.add_wall(bestChoice - numberGridSquares + 1, player);
+					board.update_valid_next_pos(player);
+					board.update_valid_next_pos(!player);
 					board.player1.dec_wall();
 				}
 				player = !player;
 			}
-		} else { // Player 2
+		} else if (number_of_AI == 1) { // Player 2
 			while (running && invalid_play) {
 				updtate_input(window, &input);
 				tie(action, state) = get_player_action(window, pci, board.grid);
@@ -150,15 +150,15 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					if (action != 'n') {
 						if (action == 'p') {
 							if (board.player2.is_possible(state)) {
-								board.moove_player(1, state);
+								board.moove_player(player, state);
 								invalid_play = false;
 							}
 						}
 						else { // action == 'w'
 							if (board.player2.get_number_walls() > 0 && board.is_possible_wall(state, &dist1, &dist2)) {
-								board.grid.add_wall(state, 1);
-								board.update_valid_next_pos(1);
-								board.update_valid_next_pos(0);
+								board.grid.add_wall(state, player);
+								board.update_valid_next_pos(player);
+								board.update_valid_next_pos(!player);
 								board.player2.dec_wall();
 								invalid_play = false;
 							}
@@ -166,8 +166,33 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 					}
 				}
 				board.grid.update_pos();
-				display_game(board, 1, action_wall);
+				display_game(board, player, action_wall);
 				StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmap_info, DIB_RGB_COLORS, SRCCOPY);
+			}
+			player = !player;
+		}
+		else { // IA 2 minmax
+			display_game(board, -1, -1);
+			StretchDIBits(hdc, 0, 0, render_state.width, render_state.height, 0, 0, render_state.width, render_state.height, render_state.memory, &render_state.bitmap_info, DIB_RGB_COLORS, SRCCOPY);
+			Node node(depth, player, board, -1);
+			int bestChoice = -1;
+			int bestValue = MAX + 1;
+			node.create_children();
+			int val;
+			for (Node child : node.children) {
+				val = minmax(child, !player, -MAX, MAX);
+				if (val < bestValue) {
+					bestValue = val;
+					bestChoice = child.state;
+				}
+			}
+			if (bestChoice < numberGridSquares)
+				board.moove_player(player, bestChoice);
+			else {
+				board.grid.add_wall(bestChoice - numberGridSquares + 1, player);
+				board.update_valid_next_pos(player);
+				board.update_valid_next_pos(!player);
+				board.player1.dec_wall();
 			}
 			player = !player;
 		}

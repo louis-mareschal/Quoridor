@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "ced15d2c-212c-4b5f-9141-e86d9cf444cd": {
+      "ProjectGuid": "ced15d2c-212c-4b5f-9141-e86d9cf444cd",
+      "DisplayName": "Quoridor",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}

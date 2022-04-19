@@ -18,17 +18,7 @@ public:
         int dist1, dist2;
         if (depth > 0 && abs(value) != MAX) {
             if (player == 0) {
-                for (int state : board.player1.get_valid_next_pos()) { // player
-                    Board board_child = board;
-                    board_child.moove_player(0, state);
-                    if (state / GRID_SIZE == 0) {
-                        children.push_back(*(new Node(depth - 1, !player, board_child, state, MAX)));
-                    }
-                    else {
-                        value_child = real_val(board_child);
-                        children.push_back(*(new Node(depth - 1, !player, board_child, state, value_child)));
-                    }
-                }
+                
                 if (board.player1.get_number_walls() > 0) {
                     bool possible;
                     vector<int> close_walls = board.player2.get_close_walls();
@@ -52,19 +42,20 @@ public:
                         children.push_back(*(new Node(depth - 1, !player, board_child, state + numberGridSquares - 1, value_child)));
                     }
                 }
-            }
-            else {
-                for (int state : board.player2.get_valid_next_pos()) { // player
+                for (int state : board.player1.get_valid_next_pos()) { // player
                     Board board_child = board;
-                    board_child.moove_player(1, state);
-                    if (state / GRID_SIZE == GRID_SIZE-1) {
-                        children.push_back(*(new Node(depth - 1, !player, board_child, state, -MAX)));
+                    board_child.moove_player(0, state);
+                    if (state / GRID_SIZE == 0) {
+                        children.push_back(*(new Node(depth - 1, !player, board_child, state, MAX)));
                     }
                     else {
                         value_child = real_val(board_child);
                         children.push_back(*(new Node(depth - 1, !player, board_child, state, value_child)));
                     }
                 }
+            }
+            else {
+                
                 if (board.player2.get_number_walls() > 0) {
                     bool possible;
                     vector<int> close_walls = board.player2.get_close_walls();
@@ -87,6 +78,17 @@ public:
                         children.push_back(*(new Node(depth - 1, !player, board_child, state + numberGridSquares - 1, value_child)));
                     }
                 }
+                for (int state : board.player2.get_valid_next_pos()) { // player
+                    Board board_child = board;
+                    board_child.moove_player(1, state);
+                    if (state / GRID_SIZE == GRID_SIZE - 1) {
+                        children.push_back(*(new Node(depth - 1, !player, board_child, state, -MAX)));
+                    }
+                    else {
+                        value_child = real_val(board_child);
+                        children.push_back(*(new Node(depth - 1, !player, board_child, state, value_child)));
+                    }
+                }
             }
         }
     }
@@ -103,7 +105,7 @@ int minmax(Node node, bool player, int alpha, int beta) {
         return node.value;
     node.create_children();
     if (player == 0) {
-        best_value = MIN;
+        best_value = MIN + 1000 * node.depth;
         for (Node child : node.children) {
             val = minmax(child, !player, alpha, beta);
             best_value = max(best_value, val);
@@ -113,7 +115,7 @@ int minmax(Node node, bool player, int alpha, int beta) {
         }
     }
     else {
-        best_value = MAX;
+        best_value = MAX - 1000 * node.depth;
         for (Node child : node.children) {
             val = minmax(child, !player, alpha, beta);
             best_value = min(best_value, val);
