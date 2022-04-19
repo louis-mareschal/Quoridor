@@ -1,6 +1,4 @@
 Debug/
 x64/
-*.vcxproj
-*.vcxproj.*
 Quoridor/Debug/
 Quoridor/x64/
