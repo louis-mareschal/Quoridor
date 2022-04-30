@@ -1,15 +1,24 @@
+
 class A_node {
 public:
 	int state;
 	int cout;
 	int heuristique;
-	A_node(int state, int cout, int heuristique) : state(state), cout(cout), heuristique(heuristique) {}
+	int first_move, second_move;
+	A_node(int state, int cout, int heuristique, int first_move, int second_move) : state(state), cout(cout), heuristique(heuristique), first_move(first_move), second_move(second_move) {}
 
-	vector<A_node*> get_neighbors(const vector<int> &list_walls_P1, const vector<int> &list_walls_P2) {
-		vector<A_node*> neighbors;
+	vector<shared_ptr<A_node>> get_neighbors(const vector<int> &list_walls_P1, const vector<int> &list_walls_P2) {
+		vector<shared_ptr<A_node>> neighbors;
 		int line = state / GRID_SIZE;
 		int column = state % GRID_SIZE;
 		int state1, state2;
+		int first_move_neighbors, second_move_neighbors;
+		if (this->cout != 0) {
+			first_move_neighbors = this->first_move;
+		}
+		if (this->cout != 1) {
+			second_move_neighbors = this->second_move;
+		}
 
 		if (column > 0) {
 			if (line != 0) state1 = (line - 1) * ((GRID_SIZE-1)*2) + (column - 1) * 2 + 1;
@@ -17,7 +26,13 @@ public:
 			if (line != GRID_SIZE-1) state2 = line * ((GRID_SIZE - 1) * 2) + (column - 1) * 2 + 1;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				neighbors.push_back(new A_node(line * GRID_SIZE + column - 1, cout, 0));
+				if (this->cout == 0) {
+					first_move_neighbors = line * GRID_SIZE + column - 1;
+				}
+				if (this->cout == 1) {
+					second_move_neighbors = line * GRID_SIZE + column - 1;
+				}
+				neighbors.push_back(make_shared<A_node>(line * GRID_SIZE + column - 1, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
 		if (column < GRID_SIZE-1) {
@@ -26,7 +41,13 @@ public:
 			if (line != GRID_SIZE-1) state2 = line * ((GRID_SIZE - 1) * 2) + column * 2 + 1;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				neighbors.push_back(new A_node(line * GRID_SIZE + column + 1, cout, 0));
+				if (this->cout == 0) {
+					first_move_neighbors = line * GRID_SIZE + column + 1;
+				}
+				if (this->cout == 1) {
+					second_move_neighbors = line * GRID_SIZE + column + 1;
+				}
+				neighbors.push_back(make_shared<A_node>(line * GRID_SIZE + column + 1, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
 		if (line > 0) {
@@ -35,7 +56,13 @@ public:
 			if (column != GRID_SIZE-1) state2 = (line - 1) * ((GRID_SIZE - 1) * 2) + column * 2;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				neighbors.push_back(new A_node((line - 1) * GRID_SIZE + column, cout, 0));
+				if (this->cout == 0) {
+					first_move_neighbors = (line - 1) * GRID_SIZE + column;
+				}
+				if (this->cout == 1) {
+					second_move_neighbors = (line - 1) * GRID_SIZE + column;
+				}
+				neighbors.push_back(make_shared<A_node>((line - 1) * GRID_SIZE + column, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
 		if (line < GRID_SIZE-1) {
@@ -44,7 +71,13 @@ public:
 			if (column != GRID_SIZE-1) state2 = line * ((GRID_SIZE - 1) * 2) + column * 2;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				neighbors.push_back(new A_node((line + 1) * GRID_SIZE + column, cout, 0));
+				if (this->cout == 0) {
+					first_move_neighbors = (line + 1) * GRID_SIZE + column;
+				}
+				if (this->cout == 1) {
+					second_move_neighbors = (line + 1) * GRID_SIZE + column;
+				}
+				neighbors.push_back(make_shared<A_node>((line + 1) * GRID_SIZE + column, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
 		return neighbors;
@@ -53,26 +86,24 @@ public:
 
 class Stack {
 public:
-	vector<A_node*> stack = {};
+	vector<shared_ptr<A_node>> stack = {};
 	int size = 0;
 
-	void add_node(A_node* node) {
-		vector<A_node*> new_stack = {};
+	void add_node(shared_ptr<A_node> node) {
 		bool insert = false;
 		for (int i = 0; i < size; i++) {
-			if (!insert && node->heuristique > stack[i]->heuristique) {
-				new_stack.push_back(node);
+			if (node->heuristique > stack[i]->heuristique) {
+				stack.insert(stack.begin() + i, move(node));
 				insert = true;
+				break;
 			}
-			new_stack.push_back(stack[i]);
 		}
 		size++;
-		if (!insert) new_stack.push_back(node);
-		stack = new_stack;
+		if (!insert) stack.push_back(move(node));;
 	}
 
-	A_node* pop() {
-		A_node* node = stack[size - 1];
+	A_node pop() {
+		A_node node = *stack[size - 1];
 		stack.erase(stack.begin() + size - 1);
 		size--;
 		return node;
@@ -143,9 +174,9 @@ public:
 		bool possible = true;
 		temp_state_wall = state;
 		list_walls_P1.push_back(state);
-		if ((*dist1 = A_star(0, l1 * GRID_SIZE + c1)) == -1)
+		if ((*dist1 = A_star(0, l1 * GRID_SIZE + c1).cout) == -1)
 			possible = false;
-		if (possible && (*dist2 = A_star(1, l2 * GRID_SIZE + c2)) == -1)
+		if (possible && (*dist2 = A_star(1, l2 * GRID_SIZE + c2).cout) == -1)
 			possible = false;
 		list_walls_P1.erase(list_walls_P1.begin() + list_walls_P1.size() - 1);
 		return possible;
@@ -233,34 +264,36 @@ public:
 		return make_tuple(x0, y0);
 	}
 
-	int A_star(bool player, int init_state) {
-		vector<A_node*> closedlist;
+	const A_node & A_star(bool player, int init_state) {
+		vector<A_node> closedlist;
 		Stack openlist;
 		vector<A_node*> neighbors;
-		openlist.add_node(new A_node(init_state, 0, 0));
-		A_node * current_node;
+		openlist.add_node(make_shared<A_node>(init_state, 0, 0, -1, -1));
 		
 		while (openlist.size != 0) {
-			current_node = openlist.pop();
-			if ((player && current_node->state / GRID_SIZE == (GRID_SIZE-1)) || (!player && current_node->state / GRID_SIZE == 0)) return current_node->cout;
-			vector<A_node *> neighbors = current_node->get_neighbors(get_list_walls_P1(), get_list_walls_P2());
-			for (A_node * neighbor : neighbors) {
-				if (!is_in_closedlist(*neighbor, closedlist) && !is_in_openlist_and_smaller(*neighbor, openlist)) {
-					neighbor->cout++;
-					if (player) neighbor->heuristique = neighbor->cout + GRID_SIZE - neighbor->state / GRID_SIZE - 1;
-					else neighbor->heuristique = neighbor->cout + neighbor->state / GRID_SIZE - 1;
-					openlist.add_node(neighbor);
+			A_node current_node = openlist.pop();
+			if ((player && current_node.state / GRID_SIZE == (GRID_SIZE-1)) || (!player && current_node.state / GRID_SIZE == 0)) 
+				return current_node;
+			vector<shared_ptr<A_node>> neighbors = current_node.get_neighbors(get_list_walls_P1(), get_list_walls_P2());
+			int size_neignbors = neighbors.size();
+			for (int i = 0; i < size_neignbors; i++) {
+				if (!is_in_closedlist(*neighbors[i], closedlist) && !is_in_openlist_and_smaller(*neighbors[i], openlist)) {
+					neighbors[i]->cout++;
+					if (player) neighbors[i]->heuristique = neighbors[i]->cout + GRID_SIZE - neighbors[i]->state / GRID_SIZE - 1;
+					else neighbors[i]->heuristique = neighbors[i]->cout + neighbors[i]->state / GRID_SIZE - 1;
+					openlist.add_node(move(neighbors[i]));
 				}
 			}
 			closedlist.push_back(current_node);
 		}
-		return -1;
+		A_node node_pb(-1, -1, -1, -1, -1);
+		return node_pb;
 	}
 
-	bool is_in_closedlist(const A_node & neighbour, const vector<A_node *> &closedlist) {
+	bool is_in_closedlist(const A_node & neighbour, vector<A_node> closedlist) {
 		int size = closedlist.size();
 		for (int i = 0; i < size; i++) {
-			if (neighbour.state == closedlist[i]->state) return true;
+			if (neighbour.state == closedlist[i].state) return true;
 		}
 		return false;
 	}

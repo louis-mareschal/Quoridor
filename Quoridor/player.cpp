@@ -24,6 +24,15 @@ public:
 		number_walls = GRID_SIZE+1;
 	}
 
+	Player(const Player& player) {
+		line = player.get_line();
+		column = player.get_column();
+		valid_next_pos = player.get_valid_next_pos();
+		color = player.color;
+		wall_high = player.wall_high;
+		number_walls = player.number_walls;
+	}
+
 	int get_line() const{
 		return line;
 	}
@@ -61,14 +70,14 @@ public:
 		return close_walls;
 	}
 
-	void update_valid_next_pos(const Player &other_player, const Grid &grid) {
+	void update_valid_next_pos(const Player & other_player, const Grid &grid) {
 		valid_next_pos = {};
 		update_valid_next_pos_right(other_player, grid);
 		update_valid_next_pos_left(other_player, grid);
 		update_valid_next_pos_up(other_player, grid);
 		update_valid_next_pos_down(other_player, grid);
 	}
-	void update_valid_next_pos_right(const Player &other_player, const Grid &grid) {
+	void update_valid_next_pos_right(const Player & other_player, const Grid &grid) {
 		bool behind = false, right = false, left = false;
 		int state1, state2, state3;
 		if (column > 0) {
@@ -229,11 +238,9 @@ public:
 		}
 	}
 
-	void moove_player(int new_state, Player * other_player, const Grid &grid) {
+	void moove_player(int new_state, const Player & other_player, const Grid &grid) {
 		tie(this->line, this->column) = state_to_x_y(new_state);
-		update_valid_next_pos(*other_player, grid);
-		other_player->update_valid_next_pos(*this, grid);
-
+		update_valid_next_pos(other_player, grid);
 	}
 
 	tuple<int, int> state_to_x_y(int state) {
