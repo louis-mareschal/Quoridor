@@ -9,78 +9,110 @@ public:
 
 	vector<shared_ptr<A_node>> get_neighbors(const vector<int> &list_walls_P1, const vector<int> &list_walls_P2) {
 		vector<shared_ptr<A_node>> neighbors;
+		
+		get_neighbor_down(&neighbors, list_walls_P1, list_walls_P2);
+		get_neighbor_up(&neighbors, list_walls_P1, list_walls_P2);
+		get_neighbor_left(&neighbors, list_walls_P1, list_walls_P2);
+		get_neighbor_right(&neighbors, list_walls_P1, list_walls_P2);
+
+		return neighbors;
+	}
+
+	void get_neighbor_down(vector<shared_ptr<A_node>>* neighbors, const vector<int>& list_walls_P1, const vector<int>& list_walls_P2) {
 		int line = state / GRID_SIZE;
 		int column = state % GRID_SIZE;
 		int state1, state2;
 		int first_move_neighbors, second_move_neighbors;
-		if (this->cout != 0) {
-			first_move_neighbors = this->first_move;
-		}
-		if (this->cout != 1) {
-			second_move_neighbors = this->second_move;
-		}
-
 		if (column > 0) {
-			if (line != 0) state1 = (line - 1) * ((GRID_SIZE-1)*2) + (column - 1) * 2 + 1;
+			if (line != 0) state1 = (line - 1) * ((GRID_SIZE - 1) * 2) + (column - 1) * 2 + 1;
 			else state1 = -1;
-			if (line != GRID_SIZE-1) state2 = line * ((GRID_SIZE - 1) * 2) + (column - 1) * 2 + 1;
+			if (line != GRID_SIZE - 1) state2 = line * ((GRID_SIZE - 1) * 2) + (column - 1) * 2 + 1;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				if (this->cout == 0) {
+				if (this->cout == 0)
 					first_move_neighbors = line * GRID_SIZE + column - 1;
-				}
-				if (this->cout == 1) {
+				else 
+					first_move_neighbors = this->first_move;
+				if (this->cout == 1)
 					second_move_neighbors = line * GRID_SIZE + column - 1;
-				}
-				neighbors.push_back(make_shared<A_node>(line * GRID_SIZE + column - 1, cout, 0, first_move_neighbors, second_move_neighbors));
+				else
+					second_move_neighbors = this->second_move;
+
+				neighbors->push_back(make_shared<A_node>(line * GRID_SIZE + column - 1, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
-		if (column < GRID_SIZE-1) {
+	}
+
+	void get_neighbor_up(vector<shared_ptr<A_node>>* neighbors, const vector<int>& list_walls_P1, const vector<int>& list_walls_P2) {
+		int line = state / GRID_SIZE;
+		int column = state % GRID_SIZE;
+		int state1, state2;
+		int first_move_neighbors, second_move_neighbors;
+		if (column < GRID_SIZE - 1) {
 			if (line != 0) state1 = (line - 1) * ((GRID_SIZE - 1) * 2) + column * 2 + 1;
 			else state1 = -1;
-			if (line != GRID_SIZE-1) state2 = line * ((GRID_SIZE - 1) * 2) + column * 2 + 1;
+			if (line != GRID_SIZE - 1) state2 = line * ((GRID_SIZE - 1) * 2) + column * 2 + 1;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				if (this->cout == 0) {
+				if (this->cout == 0) 
 					first_move_neighbors = line * GRID_SIZE + column + 1;
-				}
-				if (this->cout == 1) {
+				else
+					first_move_neighbors = this->first_move;
+				if (this->cout == 1) 
 					second_move_neighbors = line * GRID_SIZE + column + 1;
-				}
-				neighbors.push_back(make_shared<A_node>(line * GRID_SIZE + column + 1, cout, 0, first_move_neighbors, second_move_neighbors));
+				else
+					second_move_neighbors = this->second_move;
+				neighbors->push_back(make_shared<A_node>(line * GRID_SIZE + column + 1, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
+	}
+
+	void get_neighbor_left(vector<shared_ptr<A_node>>* neighbors, const vector<int>& list_walls_P1, const vector<int>& list_walls_P2) {
+		int line = state / GRID_SIZE;
+		int column = state % GRID_SIZE;
+		int state1, state2;
+		int first_move_neighbors, second_move_neighbors;
 		if (line > 0) {
 			if (column != 0) state1 = (line - 1) * ((GRID_SIZE - 1) * 2) + (column - 1) * 2;
 			else state1 = -1;
-			if (column != GRID_SIZE-1) state2 = (line - 1) * ((GRID_SIZE - 1) * 2) + column * 2;
+			if (column != GRID_SIZE - 1) state2 = (line - 1) * ((GRID_SIZE - 1) * 2) + column * 2;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				if (this->cout == 0) {
+				if (this->cout == 0) 
 					first_move_neighbors = (line - 1) * GRID_SIZE + column;
-				}
-				if (this->cout == 1) {
+				else
+					first_move_neighbors = this->first_move;
+				if (this->cout == 1) 
 					second_move_neighbors = (line - 1) * GRID_SIZE + column;
-				}
-				neighbors.push_back(make_shared<A_node>((line - 1) * GRID_SIZE + column, cout, 0, first_move_neighbors, second_move_neighbors));
+				else
+					second_move_neighbors = this->second_move;
+				neighbors->push_back(make_shared<A_node>((line - 1) * GRID_SIZE + column, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
-		if (line < GRID_SIZE-1) {
+	}
+
+	void get_neighbor_right(vector<shared_ptr<A_node>>* neighbors, const vector<int>& list_walls_P1, const vector<int>& list_walls_P2) {
+		int line = state / GRID_SIZE;
+		int column = state % GRID_SIZE;
+		int state1, state2;
+		int first_move_neighbors, second_move_neighbors;
+		if (line < GRID_SIZE - 1) {
 			if (column != 0) state1 = line * ((GRID_SIZE - 1) * 2) + (column - 1) * 2;
 			else state1 = -1;
-			if (column != GRID_SIZE-1) state2 = line * ((GRID_SIZE - 1) * 2) + column * 2;
+			if (column != GRID_SIZE - 1) state2 = line * ((GRID_SIZE - 1) * 2) + column * 2;
 			else state2 = -1;
 			if (!values_in_lists(state1, state2, list_walls_P1, list_walls_P2)) {
-				if (this->cout == 0) {
+				if (this->cout == 0) 
 					first_move_neighbors = (line + 1) * GRID_SIZE + column;
-				}
-				if (this->cout == 1) {
+				else
+					first_move_neighbors = this->first_move;
+				if (this->cout == 1) 
 					second_move_neighbors = (line + 1) * GRID_SIZE + column;
-				}
-				neighbors.push_back(make_shared<A_node>((line + 1) * GRID_SIZE + column, cout, 0, first_move_neighbors, second_move_neighbors));
+				else
+					second_move_neighbors = this->second_move;
+				neighbors->push_back(make_shared<A_node>((line + 1) * GRID_SIZE + column, cout, 0, first_move_neighbors, second_move_neighbors));
 			}
 		}
-		return neighbors;
 	}
 };
 

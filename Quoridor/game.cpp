@@ -12,9 +12,75 @@ bool is_in(int x, int y, int x0, int y0, int x1, int y1) {
 	return (x >= x0 && x <= x1 && y >= y0 && y <= y1);
 }
 
+
+
+tuple<char, int> bottom_wall(int column, int screenPosY) {
+	int state;
+	if (screenPosY / (square_size + wall_width) == 0) { // Up wall anyway (because bottom of the grid)
+		state = column * 2 + 1;
+		return make_tuple('w', state);
+	}
+	else {
+		state = column * 2 + 1 + ((screenPosY / (square_size + wall_width)) - 1) * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+}
+
+tuple<char, int> up_wall(int column, int screenPosY) {
+	int state;
+	if (screenPosY / (square_size + wall_width) == (GRID_SIZE - 1)) { // Down wall anyway (because top of the grid)
+		state = column * 2 + 1 + (GRID_SIZE - 2) * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+	else {
+		state = column * 2 + 1 + (screenPosY / (square_size + wall_width)) * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+}
+
+tuple<char, int> left_wall(int line, int screenPosX) {
+	int state;
+	if (screenPosX / (square_size + wall_width) == 0) { // right wall anyway (because left part of the grid)
+		state = line * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+	else {
+		state = ((screenPosX / (square_size + wall_width)) - 1) * 2 + line * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+}
+
+tuple<char, int> right_wall(int line, int screenPosX) {
+	int state;
+	if (screenPosX / (square_size + wall_width) == (GRID_SIZE - 1)) { // Left wall anyway (because right part of the grid)
+		state = (GRID_SIZE - 2) * 2 + line * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+	else {
+		state = (screenPosX / (square_size + wall_width)) * 2 + line * ((GRID_SIZE - 1) * 2);
+		return make_tuple('w', state);
+	}
+}
+
+tuple<char, int> vertical_walls(int screenPosX, int screenPosY) {
+	int column = screenPosX / (square_size + wall_width);
+	if (screenPosY % (square_size + wall_width) < 3)
+		return bottom_wall(column, screenPosY);
+	else
+		return up_wall(column, screenPosY);
+}
+
+tuple<char, int> horizontal_walls(int screenPosX, int screenPosY) {
+	int line = screenPosY / (square_size + wall_width);
+	if (screenPosX % (square_size + wall_width) < 3)
+		return left_wall(line, screenPosX);
+	else
+		return right_wall(line, screenPosX);
+}
+
 tuple<char, int> get_player_action(HWND window, CURSORINFO pci, const Grid &grid) {
 	update_mouse_pos(window, &pci);
-	int state, line, column;
+	int state;
 	pci.ptScreenPos.x -= grid.get_x();
 	pci.ptScreenPos.y -= grid.get_y();
 	if (is_in(pci.ptScreenPos.x, pci.ptScreenPos.y, 0, 0, grid.get_grid_size(), grid.get_grid_size())) {
@@ -22,54 +88,16 @@ tuple<char, int> get_player_action(HWND window, CURSORINFO pci, const Grid &grid
 			state = (pci.ptScreenPos.y / (square_size + wall_width)) * GRID_SIZE + (pci.ptScreenPos.x / (square_size + wall_width));
 			return make_tuple('p', state);
 		} else { // click on a wall spot
-			if (pci.ptScreenPos.x % (square_size + wall_width) >= square_size && pci.ptScreenPos.y % (square_size + wall_width) < square_size) { // Vertical wall
-				column = pci.ptScreenPos.x / (square_size + wall_width);
-				if (pci.ptScreenPos.y % (square_size + wall_width) < 3) { // Bottom wall
-					if (pci.ptScreenPos.y / (square_size + wall_width) == 0) { // Up wall anyway (because bottom of the grid)
-						state = column * 2 + 1;
-						return make_tuple('w', state);
-					} else {
-						state = column * 2 + 1 + ((pci.ptScreenPos.y / (square_size + wall_width)) - 1)* ((GRID_SIZE - 1) *2);
-						return make_tuple('w', state);
-					}
-				} else { // Up wall
-					if (pci.ptScreenPos.y / (square_size + wall_width) == (GRID_SIZE - 1)) { // Down wall anyway (because top of the grid)
-						state = column * 2 + 1 + (GRID_SIZE - 2) * ((GRID_SIZE - 1) * 2);
-						return make_tuple('w', state);
-					}
-					else {
-						state = column * 2 + 1 + (pci.ptScreenPos.y / (square_size + wall_width)) * ((GRID_SIZE - 1) * 2);
-						return make_tuple('w', state);
-					}
-				}
-			}else { // horizontal wall
-				line = pci.ptScreenPos.y / (square_size + wall_width);
-				if (pci.ptScreenPos.x % (square_size + wall_width) < 3) { // left wall
-					if (pci.ptScreenPos.x / (square_size + wall_width) == 0) { // right wall anyway (because left part of the grid)
-						state = line * ((GRID_SIZE - 1) * 2);
-						return make_tuple('w', state);
-					}
-					else {
-						state = ((pci.ptScreenPos.x / (square_size + wall_width)) - 1) * 2 + line * ((GRID_SIZE - 1) * 2);
-						return make_tuple('w', state);
-					}
-				}
-				else { // Right wall
-					if (pci.ptScreenPos.x / (square_size + wall_width) == (GRID_SIZE - 1)) { // Left wall anyway (because right part of the grid)
-						state = (GRID_SIZE - 2) * 2 + line * ((GRID_SIZE - 1) * 2);
-						return make_tuple('w', state);
-					}
-					else {
-						state = (pci.ptScreenPos.x / (square_size + wall_width)) * 2 + line * ((GRID_SIZE-1) * 2);
-						return make_tuple('w', state);
-					}
-				}
-			}
+			if (pci.ptScreenPos.x % (square_size + wall_width) >= square_size && pci.ptScreenPos.y % (square_size + wall_width) < square_size)
+				return vertical_walls(pci.ptScreenPos.x, pci.ptScreenPos.y);
+			else
+				return horizontal_walls(pci.ptScreenPos.x, pci.ptScreenPos.y);
 		}
 	}
 	return make_tuple('n', -1);
 
 }
+
 
 void updtate_input(HWND window, Input * input) {
 	MSG message;
